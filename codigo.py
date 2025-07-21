@@ -9,77 +9,86 @@ print ("holA MINDO")
 
 
 
-# control_turnos.py
+
 import random
+from collections import deque
 
 class Dado:
     def __init__(self, modo='real'):
-        self.modo = modo
-        self.valores_simulados = [5, 2, 3, 4, 6, 1, 2, 2, 2]  # valores de prueba para sandbox
-        self.indice_simulado = 0
+        self.modo = modo  # 'real' o 'desarrollador'
+        self.historial_pares = []
 
     def lanzar(self):
         if self.modo == 'real':
-            return random.randint(1, 6)
+            valor = random.randint(1, 6)
         else:
-            # Simular entrada manual con una lista de valores predefinidos
-            if self.indice_simulado < len(self.valores_simulados):
-                valor = self.valores_simulados[self.indice_simulado]
-                self.indice_simulado += 1
-                print(f"Valor simulado del dado: {valor}")
-                return valor
-            else:
-                return random.randint(1, 6)
+            valor = int(input("🔧 Modo desarrollador - Ingresa valor del dado (1-6): "))
+        self._registrar_par(valor)
+        return valor
+
+    def _registrar_par(self, valor):
+        if valor % 2 == 0:
+            self.historial_pares.append(valor)
+        else:
+            self.historial_pares = []
+
+    def tres_pares_consecutivos(self):
+        return len(self.historial_pares) >= 3
 
 
 class ControlTurnos:
-    def __init__(self, equipos):
-        self.equipos = equipos  # lista de nombres de equipos
-        self.turno_actual = 0
-        self.contador_pares = {equipo: 0 for equipo in equipos}
+    def __init__(self, equipos: list[str], modo_dado='real'):
+        self.equipos = deque(equipos)  # nombres o IDs de los equipos
+        self.turno_actual = self.equipos[0]
+        self.jugadores_saltados = set()
+        self.dado = Dado(modo_dado)
 
-    def siguiente_turno(self):
-        self.turno_actual = (self.turno_actual + 1) % len(self.equipos)
+    def avanzar_turno(self):
+        self.equipos.rotate(-1)
+        self.turno_actual = self.equipos[0]
 
-    def obtener_equipo_actual(self):
-        return self.equipos[self.turno_actual]
+    def jugar_turno(self, fichas_equipo: list):
+        print(f"\n🎲 Turno del equipo: {self.turno_actual}")
 
-    def registrar_tiro(self, valor_dado):
-        equipo = self.obtener_equipo_actual()
+        if self.turno_actual in self.jugadores_saltados:
+            print("⛔ Turno perdido por 3 pares consecutivos.")
+            self.jugadores_saltados.remove(self.turno_actual)
+            self.avanzar_turno()
+            return
 
-        if valor_dado % 2 == 0:
-            self.contador_pares[equipo] += 1
-            if self.contador_pares[equipo] == 3:
-                print(f"{equipo} sacó 3 pares consecutivos. Pierde el turno.")
-                self.contador_pares[equipo] = 0
-                self.siguiente_turno()
-            else:
-                print(f"{equipo} repite turno por sacar par.")
+        dado_valor = self.dado.lanzar()
+        print(f"🎯 {self.turno_actual} lanzó un {dado_valor}")
+
+        if self.dado.tres_pares_consecutivos():
+            print("🚫 ¡Tres pares consecutivos! Pierde el próximo turno.")
+            self.jugadores_saltados.add(self.turno_actual)
+            self.dado.historial_pares.clear()
+            self.avanzar_turno()
+            return
+
+        ficha = self.seleccionar_ficha(fichas_equipo, dado_valor)
+
+        if ficha:
+            resultado = ficha.mover(dado_valor)
+            if resultado == "llegada":
+                print("🎉 Ficha llegó: se otorgan +10 casillas.")
+                ficha.mover(10)
+            elif resultado == "captura":
+                print("💥 Ficha capturada: se otorgan +20 casillas.")
+                ficha.mover(20)
         else:
-            self.contador_pares[equipo] = 0
-            self.siguiente_turno()
+            print("⚠️ Ninguna ficha puede moverse. Turno perdido.")
 
-    def puede_mover(self, fichas_disponibles):
-        return len(fichas_disponibles) > 0
+        if dado_valor % 2 == 0:
+            print("🔁 Dado par: repite turno.")
+        else:
+            self.avanzar_turno()
 
+    def seleccionar_ficha(self, fichas: list, dado_valor: int):
+        for ficha in fichas:
+            if ficha.puede_mover(dado_valor):
+                return ficha
+        return None
 
-# Ejemplo de uso:
-if __name__ == "__main__":
-    equipos = ["Rojo", "Verde", "Azul"]
-    turno = ControlTurnos(equipos)
-    dado = Dado(modo='desarrollador')  # usar modo 'desarrollador' para evitar input()
-
-    rondas = 10  # número limitado de rondas de prueba para evitar bucle infinito en sandbox
-    for _ in range(rondas):
-        actual = turno.obtener_equipo_actual()
-        print(f"\nTurno de {actual}...")
-        valor = dado.lanzar()
-        print(f"{actual} lanzó un {valor}.")
-
-        turno.registrar_tiro(valor)
-        # Simulación ficticia de fichas:
-        fichas_disponibles = [1, 2] if valor != 3 else []
-
-        if not turno.puede_mover(fichas_disponibles):
-            print(f"{actual} no tiene movimientos disponibles. Pierde el turno.")
-            turno.siguiente_turno()
+    def asignar_modo_dado(self, modo: str):
+        self.dado = Dado(modo)
