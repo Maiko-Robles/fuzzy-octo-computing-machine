@@ -1,4 +1,4 @@
-from jugador import Jugador
+from jugador import Jugador 
 from dado import Dado
 from tablero import Tablero
 from constantes import COLORES, VALOR_SALIDA, MOV_EXTRA_CAPTURA, MOV_EXTRA_LLEGADA
@@ -25,11 +25,19 @@ class Juego:
             self.sacar_fichas(jugador, 2)
             self.mostrar_estado(jugador)
         elif d1 == 5 or d2 == 5:
-            otro = d2 if d1 == 5 else d1
-            self.sacar_fichas(jugador, 1)
-            self.mostrar_estado(jugador)
-            if self.puede_mover(jugador, otro):
-                self.mover_con_dado(jugador, otro)
+            primero, segundo = self.elegir_orden_dados(d1, d2)
+
+            if primero == 5:
+                self.sacar_fichas(jugador, 1)
+                self.mostrar_estado(jugador)
+                if self.puede_mover(jugador, segundo):
+                    self.intentar_mover_ficha(jugador, segundo)
+            else:
+                if self.puede_mover(jugador, primero):
+                    self.intentar_mover_ficha(jugador, primero)
+                if segundo == 5:
+                    self.sacar_fichas(jugador, 1)
+                    self.mostrar_estado(jugador)
         elif d1 + d2 == 5:
             self.sacar_fichas(jugador, 1)
             self.mostrar_estado(jugador)
@@ -97,20 +105,24 @@ class Juego:
         ]
         if not opciones:
             return False
+
         print(f"Selecciona ficha para mover {dado} casillas:")
         for i, f in enumerate(opciones, 1):
             print(f"{i}. {f}")
+
         while True:
-            try:
-                eleccion = int(input("> "))
-                if 1 <= eleccion <= len(opciones):
-                    ficha = opciones[eleccion - 1]
+            eleccion = input("> ").strip()
+            if eleccion.isdigit():
+                num = int(eleccion)
+                if 1 <= num <= len(opciones):
+                    ficha = opciones[num - 1]
                     resultado = self.tablero.mover_ficha(ficha, dado)
                     self.ultima_ficha_movida = ficha
                     return resultado
-            except:
-                break
-        return False
+                else:
+                    print("❌ Número fuera de rango. Intenta de nuevo.")
+            else:
+                print("❌ Entrada inválida. Escribe solo el número de la opción.")
 
     def mostrar_estado(self, jugador):
         print(f"Estado de fichas de {jugador.color}:")
@@ -126,13 +138,16 @@ class Juego:
     def elegir_orden_dados(self, d1, d2):
         if d1 == d2:
             return d1, d2
+
         print("¿Con cuál dado deseas mover primero?")
         print(f"1. Usar {d1}")
         print(f"2. Usar {d2}")
+
         while True:
-            eleccion = input("> ")
+            eleccion = input("> ").strip()
             if eleccion == "1":
                 return d1, d2
             elif eleccion == "2":
                 return d2, d1
-
+            else:
+                print("❌ Entrada inválida. Escribe 1 o 2.")
