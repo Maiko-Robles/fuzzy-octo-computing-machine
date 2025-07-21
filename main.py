@@ -2,10 +2,11 @@ from juego import Juego
 
 def main():
     print("Bienvenido a Parqués UN")
-    modo = input("Modo de juego (real/desarrollador): ").strip().lower()
-    if modo not in ["real", "desarrollador"]:
+    while True:
+        modo = input("Modo de juego (real/desarrollador): ").strip().lower()
+        if modo in ["real", "desarrollador"]:
+            break
         print("❌ Modo inválido. Escribe 'real' o 'desarrollador'.")
-        return
 
     juego = Juego(modo)
 
