@@ -1,6 +1,5 @@
-
 from ficha import Ficha
-from constantes import FICHAS_POR_JUGADOR
+from constantes import FICHAS_POR_JUGADOR, CASILLAS_SALIDA
 
 class Jugador:
     def __init__(self, color):
@@ -8,6 +7,7 @@ class Jugador:
         self.fichas = [Ficha(self, i+1) for i in range(FICHAS_POR_JUGADOR)]
         self.movimientos_extra = 0
         self.pares_consecutivos = 0
+        self.casilla_salida = CASILLAS_SALIDA[self.color]
 
     def fichas_en_juego(self):
         return [f for f in self.fichas if not f.en_carcel and not f.en_llegada]
