@@ -1,9 +1,12 @@
-# main.py
 from juego import Juego
 
 def main():
     print("Bienvenido a Parqués UN")
-    modo = input("Modo de juego (real/desarrollador): ").strip()
+    modo = input("Modo de juego (real/desarrollador): ").strip().lower()
+    if modo not in ["real", "desarrollador"]:
+        print("❌ Modo inválido. Escribe 'real' o 'desarrollador'.")
+        return
+
     juego = Juego(modo)
 
     terminado = False
@@ -12,4 +15,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
