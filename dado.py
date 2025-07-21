@@ -1,8 +1,9 @@
-
 import random
 
 class Dado:
     def __init__(self, modo='real'):
+        if modo not in ['real', 'desarrollador']:
+            raise ValueError("Modo inválido. Usa 'real' o 'desarrollador'.")
         self.modo = modo
 
     def lanzar(self):
